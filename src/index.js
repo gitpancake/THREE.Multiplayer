@@ -1,5 +1,5 @@
-import Scene from './scene';
-import * as THREE from 'three';
+import Scene from "./scene";
+import * as THREE from "three";
 
 //A socket.io instance
 const socket = io();
@@ -10,22 +10,21 @@ let id;
 let instances = [];
 let clients = new Object();
 
-glScene.on('userMoved', ()=>{
-  socket.emit('move', [glScene.camera.position.x, glScene.camera.position.y, glScene.camera.position.z]);
+glScene.on("userMoved", () => {
+  socket.emit("move", [glScene.camera.position.x, glScene.camera.position.y, glScene.camera.position.z]);
 });
 
 //On connection server sends the client his ID
-socket.on('introduction', (_id, _clientNum, _ids)=>{
-
-  for(let i = 0; i < _ids.length; i++){
-    if(_ids[i] != _id){
+socket.on("introduction", (_id, _clientNum, _ids) => {
+  for (let i = 0; i < _ids.length; i++) {
+    if (_ids[i] != _id) {
       clients[_ids[i]] = {
-        mesh: new THREE.Mesh(
-          new THREE.BoxGeometry(1,1,1),
-          new THREE.MeshNormalMaterial()
-        )
-      }
+        mesh: new THREE.Mesh(new THREE.SphereGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true })),
+      };
 
+      /**
+       *
+       */
       //Add initial users to the scene
       glScene.scene.add(clients[_ids[i]].mesh);
     }
@@ -34,54 +33,48 @@ socket.on('introduction', (_id, _clientNum, _ids)=>{
   console.log(clients);
 
   id = _id;
-  console.log('My ID is: ' + id);
-
+  console.log("My ID is: " + id);
 });
 
-socket.on('newUserConnected', (clientCount, _id, _ids)=>{
-  console.log(clientCount + ' clients connected');
+socket.on("newUserConnected", (clientCount, _id, _ids) => {
+  console.log(clientCount + " clients connected");
   let alreadyHasUser = false;
-  for(let i = 0; i < Object.keys(clients).length; i++){
-    if(Object.keys(clients)[i] == _id){
+  for (let i = 0; i < Object.keys(clients).length; i++) {
+    if (Object.keys(clients)[i] == _id) {
       alreadyHasUser = true;
       break;
     }
   }
-  if(_id != id && !alreadyHasUser){
-    console.log('A new user connected with the id: ' + _id);
+  if (_id != id && !alreadyHasUser) {
+    console.log("A new user connected with the id: " + _id);
     clients[_id] = {
-      mesh: new THREE.Mesh(
-        new THREE.BoxGeometry(1,1,1),
-        new THREE.MeshNormalMaterial()
-      )
-    }
+      mesh: new THREE.Mesh(new THREE.SphereGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true })),
+    };
 
     //Add initial users to the scene
     glScene.scene.add(clients[_id].mesh);
   }
-
 });
 
-socket.on('userDisconnected', (clientCount, _id, _ids)=>{
+socket.on("userDisconnected", (clientCount, _id, _ids) => {
   //Update the data from the server
-  document.getElementById('numUsers').textContent = clientCount;
+  document.getElementById("numUsers").textContent = clientCount;
 
-  if(_id != id){
-    console.log('A user disconnected with the id: ' + _id);
+  if (_id != id) {
+    console.log("A user disconnected with the id: " + _id);
     glScene.scene.remove(clients[_id].mesh);
     delete clients[_id];
   }
 });
 
-socket.on('connect', ()=>{});
+socket.on("connect", () => {});
 
 //Update when one of the users moves in space
-socket.on('userPositions', _clientProps =>{
+socket.on("userPositions", (_clientProps) => {
   // console.log('Positions of all users are ', _clientProps, id);
   // console.log(Object.keys(_clientProps)[0] == id);
-  for(let i = 0; i < Object.keys(_clientProps).length; i++){
-    if(Object.keys(_clientProps)[i] != id){
-
+  for (let i = 0; i < Object.keys(_clientProps).length; i++) {
+    if (Object.keys(_clientProps)[i] != id) {
       //Store the values
       let oldPos = clients[Object.keys(_clientProps)[i]].mesh.position;
       let newPos = _clientProps[Object.keys(_clientProps)[i]].position;
